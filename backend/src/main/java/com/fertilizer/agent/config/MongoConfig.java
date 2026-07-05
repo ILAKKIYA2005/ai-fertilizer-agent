@@ -1,6 +1,6 @@
 package com.fertilizer.agent.config;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,7 +22,8 @@ import de.flapdoodle.embed.mongo.MongodProcess;
 @Configuration
 
 public class MongoConfig {
-    @Bean(destroyMethod = "close")
+    @ConditionalOnProperty(name = "spring.mongodb.embedded.enabled", havingValue = "true", matchIfMissing = true)
+@Bean(destroyMethod = "close")
     public MongodProcess embeddedMongo() throws Exception {
         // Choose a MongoDB version that matches the version set in application.properties
         Distribution distro = Distribution.of(Version.Main.V5_0, Platform.Linux_X86_64);
