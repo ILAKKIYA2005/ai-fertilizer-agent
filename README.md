@@ -1,6 +1,9 @@
 # 🌱 Fertilizer Recommendation Agent
 
-An intelligent, full-stack AI agent that recommends the best fertilizer based on crop type, soil nutrients, weather conditions, and farmer goals. Powered by Spring Boot, React, MongoDB, ChromaDB, and Google Gemini API.
+An intelligent, full-stack AI agent that recommends the best fertilizer based on crop type, soil nutrients, weather conditions, and farmer goals. Powered by Spring Boot, React, MongoDB, ChromaDB, and Groq Llama-3.3 API.
+
+🌐 **Live Deployment Link:** [https://ai-fertilizer-agent-4.onrender.com/](https://ai-fertilizer-agent-4.onrender.com/)
+
 
 ## 🚀 Features
 - **AI-Powered Recommendations:** Analyzes NPK levels, soil pH, and weather data to provide explainable fertilizer recommendations.
