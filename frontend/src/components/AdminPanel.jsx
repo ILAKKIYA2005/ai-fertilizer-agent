@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './AdminPanel.css';
 
-const API_BASE = '';
+const API_BASE = import.meta.env.VITE_API_BASE || '';
 
 const AdminPanel = () => {
   const [analytics, setAnalytics] = useState(null);

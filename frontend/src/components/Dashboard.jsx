@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import './Dashboard.css';
 
-const API_BASE = '';
+const API_BASE = import.meta.env.VITE_API_BASE || '';
 
 const npkOptions = ['Low', 'Medium', 'High'];
 const growthStages = ['Seedling', 'Vegetative', 'Flowering', 'Fruiting', 'Maturity'];
