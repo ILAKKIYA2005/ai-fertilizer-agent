@@ -7,6 +7,7 @@ import com.fertilizer.agent.repository.FarmerQueryRepository;
 import com.fertilizer.agent.repository.RecommendationRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -19,8 +20,8 @@ public class RecommendationService {
     private final RecommendationRepository recommendationRepository;
     private final ObjectMapper objectMapper;
 
-    public RecommendationService(GroqService groqService, 
-                                 ChromaDBService chromaDBService, 
+    public RecommendationService(GroqService groqService,
+                                 ChromaDBService chromaDBService,
                                  PromptEngineeringService promptEngineeringService,
                                  FarmerQueryRepository farmerQueryRepository,
                                  RecommendationRepository recommendationRepository) {
@@ -33,8 +34,14 @@ public class RecommendationService {
     }
 
     public Recommendation processQuery(FarmerQuery query) {
-        // 1. Save query to MongoDB
-        FarmerQuery savedQuery = farmerQueryRepository.save(query);
+        // 1. Try to save query to MongoDB (optional — don't fail if DB is down)
+        FarmerQuery savedQuery = query;
+        try {
+            savedQuery = farmerQueryRepository.save(query);
+            System.out.println("[DB] Query saved: " + savedQuery.getId());
+        } catch (Exception e) {
+            System.err.println("[WARN] MongoDB save failed (continuing without DB): " + e.getMessage());
+        }
 
         // 2. Search Vector DB for context (optional – skip if no embedding available)
         String context = "";
@@ -53,18 +60,35 @@ public class RecommendationService {
 
         // 3. Build Prompt
         String prompt = promptEngineeringService.buildPrompt(savedQuery, context);
+        System.out.println("[GROQ] Sending prompt for crop: " + query.getCropName()
+                + ", stage: " + query.getGrowthStage()
+                + ", N=" + query.getNitrogenLevel()
+                + ", P=" + query.getPhosphorusLevel()
+                + ", K=" + query.getPotassiumLevel());
 
         // 4. Send to Groq
         String aiResponse = groqService.generateRecommendation(prompt);
+        System.out.println("[GROQ] Response received, length=" + aiResponse.length());
 
-        // 5. Parse JSON and Save Recommendation
+        // 5. Parse JSON and build Recommendation
         Recommendation recommendation = new Recommendation();
-        recommendation.setQueryId(savedQuery.getId());
-        
+        recommendation.setQueryId(savedQuery.getId() != null ? savedQuery.getId() : "local-" + System.currentTimeMillis());
+        recommendation.setGeneratedAt(LocalDateTime.now());
+
         try {
-            String cleanJson = aiResponse.replaceAll("```json", "").replaceAll("```", "").trim();
+            // Strip any markdown code fences just in case
+            String cleanJson = aiResponse
+                    .replaceAll("(?s)```json\\s*", "")
+                    .replaceAll("```", "")
+                    .trim();
+            // Extract JSON object if there's extra text
+            int start = cleanJson.indexOf('{');
+            int end = cleanJson.lastIndexOf('}');
+            if (start >= 0 && end > start) {
+                cleanJson = cleanJson.substring(start, end + 1);
+            }
             Recommendation parsed = objectMapper.readValue(cleanJson, Recommendation.class);
-            
+
             recommendation.setRecommendedFertilizer(parsed.getRecommendedFertilizer());
             recommendation.setReason(parsed.getReason());
             recommendation.setQuantity(parsed.getQuantity());
@@ -74,13 +98,23 @@ public class RecommendationService {
             recommendation.setPrecautions(parsed.getPrecautions());
             recommendation.setOrganicAlternatives(parsed.getOrganicAlternatives());
             recommendation.setExpectedImprovement(parsed.getExpectedImprovement());
-            
+            System.out.println("[OK] Recommendation parsed: " + recommendation.getRecommendedFertilizer());
+
         } catch (Exception e) {
-            System.err.println("Failed to parse Groq JSON: " + e.getMessage());
-            recommendation.setReason("Raw Output: " + aiResponse); // Fallback
+            System.err.println("[ERROR] Failed to parse Groq JSON: " + e.getMessage());
+            System.err.println("[RAW] " + aiResponse);
+            recommendation.setRecommendedFertilizer("Recommendation Generated");
+            recommendation.setReason("Raw Output: " + aiResponse);
         }
 
-        return recommendationRepository.save(recommendation);
-    }
+        // 6. Try to save recommendation to MongoDB (optional)
+        try {
+            recommendation = recommendationRepository.save(recommendation);
+            System.out.println("[DB] Recommendation saved: " + recommendation.getId());
+        } catch (Exception e) {
+            System.err.println("[WARN] MongoDB recommendation save failed (continuing): " + e.getMessage());
+        }
 
+        return recommendation;
+    }
 }
