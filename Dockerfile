@@ -17,15 +17,12 @@ RUN npm run build
 FROM maven:3.9-eclipse-temurin-17 AS backend-build
 WORKDIR /app/backend
 
-# Copy pom.xml and download dependencies first (Docker cache layer)
+# Copy pom.xml and backend source
 COPY backend/pom.xml ./
-RUN mvn dependency:go-offline -B
+COPY backend/src/ ./src/
 
 # Copy frontend build into Spring Boot static resources
 COPY --from=frontend-build /app/frontend/dist/ ./src/main/resources/static/
-
-# Copy backend source
-COPY backend/src/ ./src/
 
 # Build the fat JAR
 RUN mvn clean package -DskipTests -B
