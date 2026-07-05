@@ -47,8 +47,69 @@ An intelligent, full-stack AI agent that recommends the best fertilizer based on
    npm run dev
    ```
 
-## 🏗 Architecture
-- **Frontend (React)** sends farmer data via REST to the Backend.
-- **Backend (Spring Boot)** saves the query to MongoDB, creates an embedding, and queries ChromaDB for relevant agricultural documents.
-- **AI Engine** constructs a detailed prompt combining the farmer's query, ChromaDB context, and few-shot examples, and sends it to the Gemini API.
-- The structured JSON response is parsed, stored in MongoDB, and sent back to the React UI for beautiful presentation.
+## 🏗 Architecture & Flow Diagram
+
+The project uses a classic **Three-Tier Architecture** coupled with a **Retrieval-Augmented Generation (RAG)** pipeline to supply domain-specific agricultural context to the LLM.
+
+For a detailed view of the components and request sequence, please read the [Detailed Flow & Architecture Document](docs/architecture_flow.md).
+
+```mermaid
+graph TD
+    %% Styling definitions
+    classDef client fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#1b5e20;
+    classDef server fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#0d47a1;
+    classDef database fill:#efebe9,stroke:#4e342e,stroke-width:2px,color:#3e2723;
+    classDef ai fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#4a148c;
+
+    %% Nodes
+    subgraph Frontend [Client Application - React/Vite]
+        UI[Landing Page & Dashboard UI]:::client
+        ChatUI[AI Chat Interface]:::client
+        AdminUI[Admin Dashboard]:::client
+    end
+
+    subgraph Backend [Backend API - Spring Boot]
+        RC[Recommendation Controller]:::server
+        CC[Chat Controller]:::server
+        AC[Admin Controller]:::server
+        
+        RS[Recommendation Service]:::server
+        CS[Chat Service]:::server
+        PES[Prompt Engineering Service]:::server
+        GS[Groq Service]:::server
+        CDBS[ChromaDB Service]:::server
+    end
+
+    subgraph Storage [Data & Knowledge Bases]
+        Mongo[(MongoDB)]:::database
+        Chroma[(ChromaDB Vector Store)]:::database
+    end
+
+    subgraph AIAPI [AI Infrastructure]
+        GroqAPI[Groq API / Llama-3.3]:::ai
+    end
+
+    %% Flows & Interactions
+    UI -->|1. Submit Farmer Query POST /api/recommend| RC
+    RC -->|2. Delegate processing| RS
+    RS -->|3. Save raw query| Mongo
+    RS -->|4. Generate embedding if available| GS
+    RS -->|5. Query similar documents| CDBS
+    CDBS <-->|Query embeddings & Fetch docs| Chroma
+    RS -->|6. Compile prompt + context| PES
+    RS -->|7. Send compiled prompt| GS
+    GS <-->|Invoke Chat Completion API| GroqAPI
+    RS -->|8. Parse JSON response & Save| Mongo
+    RS -->|9. Return Recommendation JSON| RC
+    RC -->|10. Render formatted recommendation| UI
+
+    %% Chat flows
+    ChatUI -->|POST /api/chat/message| CC
+    CC -->|Process Message| CS
+    CS -->|Fetch chat history & Save user msg| Mongo
+    CS -->|Generate chat response| GS
+    CS -->|Save agent response| Mongo
+    CS -->|Return ChatHistory| CC
+    CC -->|Display chat history| ChatUI
+```
+
