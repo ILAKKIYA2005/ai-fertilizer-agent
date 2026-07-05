@@ -59,6 +59,8 @@ const Dashboard = () => {
       problemDescription: formData.problemDescription,
     };
 
+    console.log('[AgriAgent] Submitting to /api/recommend:', JSON.stringify(payload));
+
     try {
       const res = await fetch(`${API_BASE}/api/recommend`, {
         method: 'POST',
@@ -66,16 +68,21 @@ const Dashboard = () => {
         body: JSON.stringify(payload),
       });
 
+      console.log('[AgriAgent] Response status:', res.status);
+
       if (!res.ok) {
-        throw new Error(`Server responded with status ${res.status}`);
+        const errText = await res.text();
+        console.error('[AgriAgent] Server error body:', errText);
+        throw new Error(`Server responded with status ${res.status}: ${errText}`);
       }
 
       const data = await res.json();
+      console.log('[AgriAgent] Recommendation received:', data.recommendedFertilizer);
       setRecommendation(data);
       setActiveTab('report');
     } catch (err) {
-      console.error('API error:', err);
-      setError(err.message || 'Failed to connect to the backend. Please ensure the server is running on port 8080.');
+      console.error('[AgriAgent] API error:', err);
+      setError('❌ ' + (err.message || 'Failed to connect to the backend. Please ensure the server is running on port 8080.'));
     } finally {
       setLoading(false);
     }
