@@ -38,4 +38,4 @@ COPY --from=backend-build /app/backend/target/*.jar app.jar
 EXPOSE 8080
 
 # Run the application
-ENTRYPOINT ["java", "-jar", "app.jar", "--spring.profiles.active=render"]
+ENTRYPOINT ["java", "-Dhttps.protocols=TLSv1.2", "-Djdk.tls.client.protocols=TLSv1.2", "-jar", "app.jar", "--spring.profiles.active=render"]
