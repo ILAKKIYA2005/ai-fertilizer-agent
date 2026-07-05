@@ -63,7 +63,8 @@ public class GroqService {
         Map<String, Object> request = Map.of(
                 "model", MODEL,
                 "messages", List.of(Map.of("role", "user", "content", prompt)),
-                "temperature", 0.7
+                "temperature", 1.0,
+                "max_tokens", 1500
         );
         try {
             Map<?, ?> response = client().post()
