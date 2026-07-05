@@ -28,7 +28,8 @@ COPY --from=frontend-build /app/frontend/dist/ ./src/main/resources/static/
 RUN mvn clean package -DskipTests -B
 
 # ---- Stage 3: Runtime ----
-FROM eclipse-temurin:17-jre
+FROM amazoncorretto:17-alpine
+RUN apk add --no-cache ca-certificates
 WORKDIR /app
 
 # Copy the fat JAR from the build stage
