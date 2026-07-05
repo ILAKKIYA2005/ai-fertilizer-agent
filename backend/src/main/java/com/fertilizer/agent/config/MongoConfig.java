@@ -1,38 +1,15 @@
 package com.fertilizer.agent.config;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import de.flapdoodle.embed.mongo.distribution.Version;
-import de.flapdoodle.embed.mongo.distribution.Distribution;
-import de.flapdoodle.embed.mongo.distribution.Platform;
-import de.flapdoodle.embed.process.runtime.Network;
-import de.flapdoodle.embed.mongo.MongodStarter;
-import de.flapdoodle.embed.mongo.config.ImmutableMongodConfig;
-import de.flapdoodle.embed.mongo.MongodExecutable;
-import de.flapdoodle.embed.mongo.MongodProcess;
 
 /**
- * Forces the embedded MongoDB to use a generic Linux distribution that works on the
- * various Amazon Linux, CentOS, Oracle Linux, etc. environments used by Render.
- * This bypasses the Flapdoodle platform resolver which may not recognise those
- * specific OS variants.
+ * MongoDB configuration.
+ * Uses the URI supplied via the MONGODB_URI environment variable
+ * (spring.data.mongodb.uri in application-render.properties).
+ * No embedded / Flapdoodle MongoDB is started in this configuration.
  */
 @Configuration
-
 public class MongoConfig {
-    @ConditionalOnProperty(name = "spring.mongodb.embedded.enabled", havingValue = "true", matchIfMissing = true)
-@Bean(destroyMethod = "close")
-    public MongodProcess embeddedMongo() throws Exception {
-        // Choose a MongoDB version that matches the version set in application.properties
-        Distribution distro = Distribution.of(Version.Main.V5_0, Platform.Linux_X86_64);
-        var mongodConfig = ImmutableMongodConfig.builder()
-                .version(distro.version())
-                .net(new de.flapdoodle.embed.mongo.config.Net(Network.getFreeServerPort(), false))
-                .build();
-        var starter = MongodStarter.getDefaultInstance();
-        MongodExecutable exe = starter.prepare(mongodConfig);
-        return exe.start();
-    }
+    // Spring Data MongoDB auto-configures the MongoClient from
+    // spring.data.mongodb.uri, so no bean definitions are needed here.
 }

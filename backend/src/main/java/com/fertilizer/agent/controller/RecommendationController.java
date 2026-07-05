@@ -23,6 +23,8 @@ public class RecommendationController {
             Recommendation recommendation = recommendationService.processQuery(query);
             return ResponseEntity.ok(recommendation);
         } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("[ERROR] /api/recommend failed: " + e.getClass().getName() + " - " + e.getMessage());
             return ResponseEntity.internalServerError().build();
         }
     }

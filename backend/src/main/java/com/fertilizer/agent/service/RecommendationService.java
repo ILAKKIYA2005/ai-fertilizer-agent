@@ -36,11 +36,20 @@ public class RecommendationService {
         // 1. Save query to MongoDB
         FarmerQuery savedQuery = farmerQueryRepository.save(query);
 
-        // 2. Search Vector DB for context
-        String queryText = "Crop: " + query.getCropName() + ", Problem: " + query.getProblemDescription();
-        List<Double> queryEmbedding = groqService.generateEmbedding(queryText);
-        List<String> retrievedDocs = chromaDBService.searchSimilar("fertilizer_knowledge", queryEmbedding, 3);
-        String context = String.join("\n", retrievedDocs);
+        // 2. Search Vector DB for context (optional – skip if no embedding available)
+        String context = "";
+        try {
+            String queryText = "Crop: " + query.getCropName() + ", Problem: " + query.getProblemDescription();
+            List<Double> queryEmbedding = groqService.generateEmbedding(queryText);
+            if (queryEmbedding != null && !queryEmbedding.isEmpty()) {
+                List<String> retrievedDocs = chromaDBService.searchSimilar("fertilizer_knowledge", queryEmbedding, 3);
+                context = String.join("\n", retrievedDocs);
+            } else {
+                System.out.println("[INFO] No embeddings available – skipping ChromaDB search.");
+            }
+        } catch (Exception e) {
+            System.err.println("[WARN] ChromaDB search failed, continuing without context: " + e.getMessage());
+        }
 
         // 3. Build Prompt
         String prompt = promptEngineeringService.buildPrompt(savedQuery, context);
@@ -53,9 +62,6 @@ public class RecommendationService {
         recommendation.setQueryId(savedQuery.getId());
         
         try {
-            // Attempt to parse structured JSON from Gemini response
-            // For simplicity, we are mapping it dynamically or using a fallback if formatting fails
-            // Assuming aiResponse is a valid JSON string without markdown codeblocks
             String cleanJson = aiResponse.replaceAll("```json", "").replaceAll("```", "").trim();
             Recommendation parsed = objectMapper.readValue(cleanJson, Recommendation.class);
             
@@ -70,10 +76,11 @@ public class RecommendationService {
             recommendation.setExpectedImprovement(parsed.getExpectedImprovement());
             
         } catch (Exception e) {
-            System.err.println("Failed to parse Gemini JSON: " + e.getMessage());
+            System.err.println("Failed to parse Groq JSON: " + e.getMessage());
             recommendation.setReason("Raw Output: " + aiResponse); // Fallback
         }
 
         return recommendationRepository.save(recommendation);
     }
+
 }
