@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: fertilizer_mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: fertilizer_chromadb
+    ports:
+      - "8000:8000"
+    volumes:
+      - chromadb_data:/chroma/chroma
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: fertilizer_backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongodb
+      - chromadb
+    environment:
+      - spring.data.mongodb.uri=mongodb://admin:password@mongodb:27017/fertilizer_db?authSource=admin
+      - chroma.api.url=http://chromadb:8000
+      - SPRING_PROFILES_ACTIVE=prod
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - OPENWEATHERMAP_API_KEY=${OPENWEATHERMAP_API_KEY:-}
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: fertilizer_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  mongodb_data:
+  chromadb_data:

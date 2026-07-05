@@ -1,0 +1,121 @@
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ============ NAVBAR ============ */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.9rem 2.5rem;
+  margin: 16px 20px 0;
+  border-radius: 60px;
+  background: rgba(10, 26, 15, 0.9);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  position: sticky;
+  top: 12px;
+  z-index: 100;
+  transition: var(--transition);
+}
+
+.navbar:hover {
+  transform: none;
+  border-color: var(--glass-border-strong);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.35rem;
+  font-weight: 800;
+  font-family: 'Outfit', sans-serif;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-gold) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.3px;
+}
+
+.logo-icon {
+  font-size: 1.5rem;
+  filter: drop-shadow(0 0 8px rgba(111, 207, 124, 0.6));
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.nav-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 8px 18px;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: var(--transition);
+  letter-spacing: 0.2px;
+}
+
+.nav-btn:hover {
+  color: var(--text-primary);
+  background: rgba(111, 207, 124, 0.08);
+  border-color: var(--glass-border);
+}
+
+.nav-btn.active {
+  color: var(--accent);
+  background: rgba(111, 207, 124, 0.12);
+  border-color: var(--glass-border-strong);
+}
+
+/* ============ MAIN ============ */
+.main-content {
+  flex-grow: 1;
+  padding: 2rem 1.5rem;
+  max-width: 1300px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ============ FOOTER ============ */
+.footer {
+  margin: 16px 20px;
+  border-radius: 20px;
+  padding: 1.4rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(10, 26, 15, 0.7);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.footer-links {
+  display: flex;
+  gap: 20px;
+}
+
+.footer-links a {
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: var(--transition-fast);
+}
+
+.footer-links a:hover {
+  color: var(--accent);
+}

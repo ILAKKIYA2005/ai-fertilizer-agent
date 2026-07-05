@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: agri-fertilizer-agent
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: SPRING_PROFILES_ACTIVE
+        value: render
+      - key: PORT
+        value: "8080"
