@@ -37,11 +37,26 @@ public class GroqService {
     }
 
     private WebClient client() {
-        return webClientBuilder
-                .baseUrl(GROQ_BASE_URL)
-                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
-                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .build();
+        try {
+            var sslContext = io.netty.handler.ssl.SslContextBuilder.forClient()
+                    .trustManager(io.netty.handler.ssl.util.InsecureTrustManagerFactory.INSTANCE)
+                    .build();
+            var httpClient = reactor.netty.http.client.HttpClient.create()
+                    .secure(sslContextSpec -> sslContextSpec.sslContext(sslContext));
+            return webClientBuilder
+                    .baseUrl(GROQ_BASE_URL)
+                    .clientConnector(new org.springframework.http.client.reactive.ReactorClientHttpConnector(httpClient))
+                    .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
+                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .build();
+        } catch (Exception e) {
+            System.err.println("[Groq] Failed to build SSL-bypass client: " + e.getMessage());
+            return webClientBuilder
+                    .baseUrl(GROQ_BASE_URL)
+                    .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
+                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .build();
+        }
     }
 
     public String generateRecommendation(String prompt) {
